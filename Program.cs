@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Xml.Serialization;
 
@@ -9,8 +10,9 @@ internal class Program {
     static void Main(string[] args) {
         Boolean appRunning = true;
         MainMenu menu = new MainMenu();
-        FileHandler files = new FileHandler();  
-        List<Movie> movieList = new List<Movie>();
+        FileHandler files = new FileHandler();
+        // List<Movie> movieList = new List<Movie>();
+        MovieList movies = new MovieList();
         while (appRunning) {
             int count = 0;
             menu.DisplayMenu();
@@ -18,44 +20,25 @@ internal class Program {
             switch (selection) {
                 case 1:
                     Console.WriteLine("\n\rAdd a Movie:");
-                    Movie movie = menu.AddMovie();
-                    movieList.Add(movie);
+                    movies.AddMovie();
                     break;
                 case 2:
                     Console.WriteLine("\n\rDelete a Movie:");
-                    count = 0;
-                    foreach (Movie aMovie in movieList) {
-                        count++;
-                        Console.Write(count + ") ");
-                        aMovie.Display();
-                        
-                    }
-                    Console.Write("Input: ");
-                    int deleteChoice = int.Parse(Console.ReadLine());
-                    if (deleteChoice > 0 && deleteChoice <= count) {
-                        movieList.RemoveAt(count-1);
-                    }
+                    movies.DeleteMovie();
 
                     break;
                 case 3:
                     Console.Write("\n\r");
-                    count = 0;
-                    int totalTime = 0;
-                    foreach (Movie aMovie in movieList) {
-                        aMovie.Display();
-                        count++;
-                        totalTime += aMovie.Length;
-                    }
-                    Console.Write("\n\rTotal of " + count + " movies and " + totalTime + " minutes.\n");
+                    movies.ListMovies();    
                     break;
                 case 4:
                     Console.WriteLine("\n\rLoad database");
-                    movieList = files.Load();
+                    movies = files.Load();
                     break;
                 case 5:
                     Console.Write("\n\r");
                     //Console.WriteLine("\n\rSave database");
-                    files.Save(movieList);
+                    files.Save(movies);
                     Console.WriteLine("Database saved.");
                     break;
                 case 6:
@@ -86,6 +69,56 @@ public class Movie {
         Console.WriteLine("" + Name + " (" + Year + "), " + Length + " minutes.  ");
     }
 }
+[Serializable]
+public class MovieList {
+    public List<Movie> movies = new List<Movie>();
+    public MovieList() {
+
+    }
+    public void AddMovie() {
+        String name = null;
+        while (name == null) {
+            Console.Write("Name:");
+            name = Console.ReadLine();
+        }
+        int length = -1;
+        while (length < 0) {
+            Console.Write("Length (min):");
+            length = int.Parse(Console.ReadLine());
+        }
+        int year = -1;
+        while (year <= 0) {
+            Console.Write("Year:");
+            year = int.Parse(Console.ReadLine());
+        }
+
+        Movie newMovie = new Movie(name, length, year);
+        movies.Add(newMovie);
+    }
+    public void DeleteMovie() {
+        int count = 0;
+        foreach (Movie aMovie in movies) {
+            count++;
+            Console.Write(count + ") ");
+            aMovie.Display();
+
+        }
+        Console.Write("Input: ");
+        int deleteChoice = int.Parse(Console.ReadLine());
+        if (deleteChoice > 0 && deleteChoice <= count) {
+            movies.RemoveAt(count - 1);
+        }
+
+    }
+    public void ListMovies() {
+        int count = 0;
+        foreach (Movie movie in movies) {
+            count++;
+            Console.Write(count + ") ");
+            movie.Display();
+        }
+    }
+}
 class MainMenu {
     public MainMenu() {
     }
@@ -100,6 +133,7 @@ class MainMenu {
         Console.WriteLine("6) Quit");
         Console.Write("Input: ");
     }
+    /*
     public Movie AddMovie() {
         Console.Write("Name:");
         string name = Console.ReadLine();
@@ -110,36 +144,38 @@ class MainMenu {
         Movie newMovie = new Movie(name, length, year);
         return newMovie;
     }
+    */
 
 
 }
 class FileHandler {
-     String name = "database.xml";
+    String name = "database.xml";
     public FileHandler() {
-       
+
 
     }
-    public void Save(List<Movie> movieList) {
-        XmlSerializer SerializedFormat = new XmlSerializer(typeof(List<Movie>));
-        using (StreamWriter sw = new StreamWriter(this.name)) 
-        {
+    public void Save(MovieList movieList) {
+        
+        XmlSerializer SerializedFormat = new XmlSerializer(typeof(MovieList));
+        using (StreamWriter sw = new StreamWriter(this.name)) {
             SerializedFormat.Serialize(sw, movieList);
             sw.Close();
         }
     }
-    public List<Movie> Load() {
-        List<Movie>LoadedMovies = new List<Movie>();
+    public MovieList Load() {
+        MovieList LoadedMovies = new MovieList();
         if (File.Exists(this.name)) {
-            XmlSerializer SerializedFormat = new XmlSerializer(typeof(List<Movie>));  
-           
+            XmlSerializer SerializedFormat = new XmlSerializer(typeof(MovieList));
+
             using (var reader = new StreamReader(this.name)) {
-                LoadedMovies = (List<Movie>) SerializedFormat.Deserialize(reader);
+                LoadedMovies = (MovieList)SerializedFormat.Deserialize(reader);
             }
-        } else {
+        }
+        else {
             Console.WriteLine("No database available.");
         }
+        
 
-
-        return LoadedMovies;    
+        return LoadedMovies;
     }
 }
